@@ -1,32 +1,40 @@
-const app = require("express")();
-const chrome = require("chrome-aws-lambda");
-const puppeteer = require("puppeteer-core");
+const app = require('express')();
+const puppeteer = require('puppeteer');
+const puppeteerCore = require('puppeteer-core');
+const chromium = require('@sparticuz/chromium-min');
 
-app.get("/api", async (req, res) => {
+app.get('/api', async (req, res) => {
+  try {
+    let browser;
 
-    const options = {
-        args: [...chrome.args, "--hide-scrollbars", "--disable-web-security"],
-        defaultViewport: chrome.defaultViewport,
-        executablePath: await chrome.executablePath,
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
+      const executablePath = await chromium.executablePath(
+        'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+      );
+      browser = await puppeteerCore.launch({
+        executablePath,
+        args: chromium.args,
+        headless: chromium.headless,
+        defaultViewport: chromium.defaultViewport,
+      });
+    } else {
+      browser = await puppeteer.launch({
         headless: true,
-        ignoreHTTPSErrors: true,
-    };
-  
-
-    try {
-        const browser = await puppeteer.launch(options);
-        const page = await browser.newPage();
-        await page.goto("https://www.google.com");
-        
-        res.send(await page.title());
-    } catch (err) {
-        console.error(err);
-        return null;
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
     }
+
+    const page = await browser.newPage();
+    await page.goto('https://www.google.com');
+    res.send(await page.title());
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
 });
 
 app.listen(process.env.PORT || 3000, () => {
-    console.log("Server started");
+  console.log('Server started');
 });
 
 module.exports = app;
