@@ -2,6 +2,7 @@ const app = require('express')();
 const puppeteer = require('puppeteer');
 const puppeteerCore = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium-min');
+const cron = require('cron');
 
 app.get('/api', async (req, res) => {
   try {
@@ -35,6 +36,24 @@ app.get('/api', async (req, res) => {
 
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server started');
+});
+
+cron.CronJob.from({
+  cronTime: '* * * * * *',
+  onTick: function () {
+    console.log('You will see this message every second');
+  },
+  start: true,
+  timeZone: 'Asia/Jakarta',
+});
+
+cron.CronJob.from({
+  cronTime: '* * * * *',
+  onTick: function () {
+    console.log('You will see this message every minute');
+  },
+  start: true,
+  timeZone: 'Asia/Jakarta',
 });
 
 module.exports = app;
